@@ -10,6 +10,10 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 
+/**
+ * @author Vladimir Kishlaly
+ * @since 29.07.2017
+ */
 public class Game {
 
     private String userName;

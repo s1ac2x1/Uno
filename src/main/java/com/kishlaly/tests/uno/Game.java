@@ -44,85 +44,15 @@ public class Game {
         Status status = new Status(initialCard, deck[initialCard][Constants.TYPE_INDEX], deck[initialCard][Constants.COLOR_INDEX], deck[initialCard][Constants.NUM_INDEX], players);
 
         while (true) {
-            status.showCurrentGameStatus(deck);
-            int playerNumber = status.getCurrentPlayerIndex();
-            if (playerNumber == 0) {
-                println("Your cards (" + players[Constants.TYPE_INDEX].getHandSize() + " left) :");
-                for (int i = 0; i < players[Constants.TYPE_INDEX].getHandSize(); i++) {
-                    println("\t\t" + DeckUtils.showCardInfo(deck, players[Constants.TYPE_INDEX].getHandCardNumber(i)));
-                }
-                println(Constants.DELIMITER);
-            }
+            int playerNumber = startDesc(status);
 
             if (status.getDraw() > 0) {
                 int[] possibleCards = playersLogic.getAryOfPossibleCards(playerNumber, deck, status);
                 if (possibleCards.length == 0) {
-                    if (playerNumber == 0) {
-                        print("You have no draw card to put! You must pick up " + status.getDraw() + " cards. Press enter.");
-                        scanner.nextLine();
-                        if (playersLogic.ifWin(playerNumber, status.getDraw(), Constants.MAX_HAND_SIZE) >= 0) {
-                            println(players[playerNumber].getId() + " lost!");
-                            break;
-                        }
-                        println("Getting new cards..");
-                        int[] drawnCAry = playersLogic.drawCards(playerNumber, deck, status.getDraw(), status);
-                        status.clearDraw();
-                        print("The new cards are:\t");
-                        for (int i = 0; i < drawnCAry.length; i++) {
-                            if (i > 0) {
-                                print("\t\t\t");
-                            }
-                            println(DeckUtils.showCardInfo(deck, drawnCAry[i]));
-                        }
-                    } else {
-                        println(players[playerNumber].getId() + " had nothing to put and picked up " + status.getDraw() + " cards.");
-                        if (playersLogic.ifWin(playerNumber, status.getDraw(), Constants.MAX_HAND_SIZE) >= 0) {
-                            println(players[playerNumber].getId() + " lost!");
-                            break;
-                        }
-                        playersLogic.drawCards(playerNumber, deck, status.getDraw(), status);
-                        status.clearDraw();
-                    }
+                    if (hasMoreCards(scanner, playersLogic, status, playerNumber)) break;
                 } else {
                     if (playerNumber == 0) {
-                        print("Your have " + possibleCards.length + " card" + ((possibleCards.length == 0) ? "" : "s") + " to select");
-                        for (int i = 0; i < possibleCards.length; i++) {
-                            println("\t\t[" + i + "]  " + DeckUtils.showCardInfo(deck, possibleCards[i]));
-                        }
-                        print("Select the number ");
-                        int cardNumToPut = Integer.parseInt(scanner.nextLine());
-                        while (cardNumToPut < 0 || cardNumToPut >= possibleCards.length) {
-                            print("Wrong index ");
-                            Integer.parseInt(scanner.nextLine());
-                        }
-                        cardNumToPut = possibleCards[cardNumToPut];
-                        playersLogic.putACard(playerNumber, cardNumToPut, deck, status);
-                        while (true) {
-                            int[] secondaryPossibleCards = playersLogic.tryToSelectAgain(playerNumber, deck, status);
-                            if (secondaryPossibleCards.length == 0) {
-                                break;
-                            }
-                            players[playerNumber].showHand(deck);
-                            println("You have " + secondaryPossibleCards.length + " more card" + ((secondaryPossibleCards.length == 0) ? "" : "s"));
-                            for (int i = 0; i < secondaryPossibleCards.length; i++) {
-                                println("\t\t[" + i + "]   " + DeckUtils.showCardInfo(deck, secondaryPossibleCards[i]));
-                            }
-                            println("\t\t[" + secondaryPossibleCards.length + "]. Put nothing.");
-                            print("Select the number ");
-                            int secondaryCardNumToPut = Integer.parseInt(scanner.nextLine());
-                            while (secondaryCardNumToPut < 0 || secondaryCardNumToPut > secondaryPossibleCards.length) {
-                                print("Wrong number. please retry: ");
-                                secondaryCardNumToPut = Integer.parseInt(scanner.nextLine());
-                            }
-                            if (secondaryPossibleCards.length != secondaryCardNumToPut) {
-                                secondaryCardNumToPut = secondaryPossibleCards[secondaryCardNumToPut];
-                                playersLogic.putACard(playerNumber, secondaryCardNumToPut, deck, status);
-                            } else {
-                                println("You quit to put.");
-                                break;
-                            }
-
-                        }
+                        nextMove(scanner, playersLogic, status, playerNumber, possibleCards);
                     } else {
                         playersLogic.selectRandom(playerNumber, status, deck, possibleCards);
                         while (true) {
@@ -173,33 +103,7 @@ public class Game {
                         } while (cardNumToPut < 0 || cardNumToPut >= possibleCards.length);
                         cardNumToPut = possibleCards[cardNumToPut];
                         playersLogic.putACard(playerNumber, cardNumToPut, deck, status);
-                        while (true) {
-                            int[] secondaryPossibleCards = playersLogic.tryToSelectAgain(playerNumber, deck, status);
-                            if (secondaryPossibleCards.length == 0) {
-                                break;
-                            }
-                            players[playerNumber].showHand(deck);
-                            println("You have " + secondaryPossibleCards.length + " more card" + ((secondaryPossibleCards.length == 0) ? "" : "s") + " to put!");
-                            println("Please select the next card:");
-                            for (int i = 0; i < secondaryPossibleCards.length; i++) {
-                                println("\t\t[" + i + "]   " + DeckUtils.showCardInfo(deck, secondaryPossibleCards[i]));
-                            }
-                            println("\t\t[" + secondaryPossibleCards.length + "]  Quit. Put nothing.");
-                            print("Which card do you prefer to put? input a number inside of [] ");
-                            int secondaryCardNumToPut = -1;
-                            secondaryCardNumToPut = Integer.parseInt(scanner.nextLine());
-                            while (secondaryCardNumToPut < 0 || secondaryCardNumToPut > secondaryPossibleCards.length) {
-                                print("Wrong number. please retry: ");
-                                secondaryCardNumToPut = Integer.parseInt(scanner.nextLine());
-                            }
-                            if (secondaryPossibleCards.length != secondaryCardNumToPut) {
-                                secondaryCardNumToPut = secondaryPossibleCards[secondaryCardNumToPut];
-                                playersLogic.putACard(playerNumber, secondaryCardNumToPut, deck, status);
-                            } else {
-                                println("You quit to put.");
-                                break;
-                            }
-                        }
+                        whatToChoose(scanner, playersLogic, status, playerNumber);
                     } else {
                         playersLogic.selectRandom(playerNumber, status, deck, possibleCards);
                         while (true) {
@@ -265,6 +169,129 @@ public class Game {
         } else {
             println("\nYou lost!");
         }
+    }
+
+    private void whatToChoose(Scanner scanner, PlayersLogic playersLogic, Status status, int playerNumber) {
+        while (true) {
+            int[] secondaryPossibleCards = playersLogic.tryToSelectAgain(playerNumber, deck, status);
+            if (secondaryPossibleCards.length == 0) {
+                break;
+            }
+            players[playerNumber].showHand(deck);
+            println("You have " + secondaryPossibleCards.length + " more card" + ((secondaryPossibleCards.length == 0) ? "" : "s") + " to put!");
+            println("Please select the next card:");
+            for (int i = 0; i < secondaryPossibleCards.length; i++) {
+                println("\t\t[" + i + "]   " + DeckUtils.showCardInfo(deck, secondaryPossibleCards[i]));
+            }
+            println("\t\t[" + secondaryPossibleCards.length + "]  Quit. Put nothing.");
+            print("Which card do you prefer to put? input a number inside of [] ");
+            int secondaryCardNumToPut = -1;
+            secondaryCardNumToPut = Integer.parseInt(scanner.nextLine());
+            while (secondaryCardNumToPut < 0 || secondaryCardNumToPut > secondaryPossibleCards.length) {
+                print("Wrong number. please retry: ");
+                secondaryCardNumToPut = Integer.parseInt(scanner.nextLine());
+            }
+            if (secondaryPossibleCards.length != secondaryCardNumToPut) {
+                secondaryCardNumToPut = secondaryPossibleCards[secondaryCardNumToPut];
+                playersLogic.putACard(playerNumber, secondaryCardNumToPut, deck, status);
+            } else {
+                println("You quit to put.");
+                break;
+            }
+        }
+    }
+
+    private void nextMove(Scanner scanner, PlayersLogic playersLogic, Status status, int playerNumber, int[] possibleCards) {
+        print("Your have " + possibleCards.length + " card" + ((possibleCards.length == 0) ? "" : "s") + " to select");
+        for (int i = 0; i < possibleCards.length; i++) {
+            println("\t\t[" + i + "]  " + DeckUtils.showCardInfo(deck, possibleCards[i]));
+        }
+        print("Select the number ");
+        int cardNumToPut = Integer.parseInt(scanner.nextLine());
+        while (cardNumToPut < 0 || cardNumToPut >= possibleCards.length) {
+            print("Wrong index ");
+            Integer.parseInt(scanner.nextLine());
+        }
+        cardNumToPut = possibleCards[cardNumToPut];
+        playersLogic.putACard(playerNumber, cardNumToPut, deck, status);
+        makeATurn(scanner, playersLogic, status, playerNumber);
+    }
+
+    private boolean hasMoreCards(Scanner scanner, PlayersLogic playersLogic, Status status, int playerNumber) {
+        if (playerNumber == 0) {
+            if (emptyCards(scanner, playersLogic, status, playerNumber)) return true;
+        } else {
+            println(players[playerNumber].getId() + " had nothing to put and picked up " + status.getDraw() + " cards.");
+            if (playersLogic.ifWin(playerNumber, status.getDraw(), Constants.MAX_HAND_SIZE) >= 0) {
+                println(players[playerNumber].getId() + " lost!");
+                return true;
+            }
+            playersLogic.drawCards(playerNumber, deck, status.getDraw(), status);
+            status.clearDraw();
+        }
+        return false;
+    }
+
+    private void makeATurn(Scanner scanner, PlayersLogic playersLogic, Status status, int playerNumber) {
+        while (true) {
+            int[] secondaryPossibleCards = playersLogic.tryToSelectAgain(playerNumber, deck, status);
+            if (secondaryPossibleCards.length == 0) {
+                break;
+            }
+            players[playerNumber].showHand(deck);
+            println("You have " + secondaryPossibleCards.length + " more card" + ((secondaryPossibleCards.length == 0) ? "" : "s"));
+            for (int i = 0; i < secondaryPossibleCards.length; i++) {
+                println("\t\t[" + i + "]   " + DeckUtils.showCardInfo(deck, secondaryPossibleCards[i]));
+            }
+            println("\t\t[" + secondaryPossibleCards.length + "]. Put nothing.");
+            print("Select the number ");
+            int secondaryCardNumToPut = Integer.parseInt(scanner.nextLine());
+            while (secondaryCardNumToPut < 0 || secondaryCardNumToPut > secondaryPossibleCards.length) {
+                print("Wrong number. please retry: ");
+                secondaryCardNumToPut = Integer.parseInt(scanner.nextLine());
+            }
+            if (secondaryPossibleCards.length != secondaryCardNumToPut) {
+                secondaryCardNumToPut = secondaryPossibleCards[secondaryCardNumToPut];
+                playersLogic.putACard(playerNumber, secondaryCardNumToPut, deck, status);
+            } else {
+                println("You quit to put.");
+                break;
+            }
+
+        }
+    }
+
+    private boolean emptyCards(Scanner scanner, PlayersLogic playersLogic, Status status, int playerNumber) {
+        print("You have no draw card to put! You must pick up " + status.getDraw() + " cards. Press enter.");
+        scanner.nextLine();
+        if (playersLogic.ifWin(playerNumber, status.getDraw(), Constants.MAX_HAND_SIZE) >= 0) {
+            println(players[playerNumber].getId() + " lost!");
+            return true;
+        }
+        println("Getting new cards..");
+        int[] drawnCAry = playersLogic.drawCards(playerNumber, deck, status.getDraw(), status);
+        status.clearDraw();
+        print("The new cards are:\t");
+        for (int i = 0; i < drawnCAry.length; i++) {
+            if (i > 0) {
+                print("\t\t\t");
+            }
+            println(DeckUtils.showCardInfo(deck, drawnCAry[i]));
+        }
+        return false;
+    }
+
+    private int startDesc(Status status) {
+        status.showCurrentGameStatus(deck);
+        int playerNumber = status.getCurrentPlayerIndex();
+        if (playerNumber == 0) {
+            println("Your cards (" + players[Constants.TYPE_INDEX].getHandSize() + " left) :");
+            for (int i = 0; i < players[Constants.TYPE_INDEX].getHandSize(); i++) {
+                println("\t\t" + DeckUtils.showCardInfo(deck, players[Constants.TYPE_INDEX].getHandCardNumber(i)));
+            }
+            println(Constants.DELIMITER);
+        }
+        return playerNumber;
     }
 
     public String[][] createDeck() {
